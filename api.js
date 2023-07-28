@@ -31,11 +31,19 @@ router.route('/calls').get((request, response) => {
   
 });
 
+let fullCount
+let lastRan = null
+
 router.route('/count').get((request, response) => {
-  
+  if (lastRan == null || new Date().getTime() > lastRan.getTime() + (10 * 60 * 1000)) {
   CountDb.getCount().then((data) => {
-    response.json(data[0]);
+    lastRan = new Date()
+    fullCount = data[0];
+    response.json(fullCount);
   })
+} else {
+  response.json(fullCount)
+}
 });
 
 app.listen(8080)
