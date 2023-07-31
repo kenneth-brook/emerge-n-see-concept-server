@@ -1,6 +1,7 @@
 const  config = require('./dbconfig');
 const  Db = require('./dbopperations');
 const  CountDb = require('./CountDB');
+const  CountDayDb = require('./CountDayDB');
 const  express = require('express'); 
 const  bodyParser = require('body-parser');
 const  cors = require('cors');
@@ -22,7 +23,6 @@ app.use(function(req, res, next) {
 });
 app.use('/api', router);
 
-
 router.route('/calls').get((request, response) => {
   
   Db.getCalls().then((data) => {
@@ -31,19 +31,26 @@ router.route('/calls').get((request, response) => {
   
 });
 
-let fullCount
-let lastRan = null
+let lastRan = null;
+let builtCount = [];
 
 router.route('/count').get((request, response) => {
   if (lastRan == null || new Date().getTime() > lastRan.getTime() + (10 * 60 * 1000)) {
-  CountDb.getCount().then((data) => {
-    lastRan = new Date()
-    fullCount = data[0];
-    response.json(fullCount);
-  })
-} else {
-  response.json(fullCount)
-}
+    builtCount = [];
+    lastRan = new Date();
+    CountDb.getCount().then((data) => {
+      let full = data[0]
+      builtCount.splice(0, 0, full);
+    })
+    CountDayDb.getDayCount().then((data) => {
+      let day = data[0]
+      builtCount.splice(1, 0, day);
+    })
+    .then(response.json(builtCount));
+  } else {
+    response.json(builtCount)
+  }
+  
 });
 
 app.listen(8080)
